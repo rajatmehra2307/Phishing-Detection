@@ -27,7 +27,7 @@ import MODULE # with function COMPUTE_FEATURES()
 
 
 
-dictBinaryLabels={1:'phishy',0:'benign'}   
+dictBinaryLabels={1:'phishy',-1:'benign'}   
 
 # Load the python lists with phishing and benign URLs/domains
 
@@ -62,7 +62,7 @@ xTRUE=COMPUTE_FEATURES(PhishingList)
 yTRUE=[1]*len(xTRUE)
 
 xBenign=COMPUTE_FEATURES(BenignList)
-yBenign=[0]*len(xBenign)
+yBenign=[-1]*len(xBenign)
 
 
 xTRUE.extend(xBenign)
@@ -126,7 +126,7 @@ max_fpr = 0.10 # This refers to benign URLs labeled as "phishy". We want this ra
 pauc10 = roc_auc_score(y_test, prob_y_predicted[:,1], max_fpr=max_fpr)
 
 # Compute distributions of probabilities
-Lprob0=[] # 0:'benign'
+Lprob0=[] # -1:'benign'
 Lprob1=[] # 1:malicious'=positive!
 for gg in range(prob_y_predicted.shape[0]): # n_samples
         if prob_y_predicted[gg,0]>prob_y_predicted[gg,1]:
