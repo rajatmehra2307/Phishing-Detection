@@ -1,7 +1,9 @@
 import argparse
+from collections import Counter
 import dataclasses
 import datetime
 import json
+import math
 from pathlib import Path
 import re
 from typing import Optional
@@ -197,7 +199,11 @@ def extract_feature_num_double_slash_redirects(ctx: Context) -> int:
     return count
 
 
-# TODO: url entropy
+@register_feature('url_entropy')
+def extract_feature_url_entropy(ctx: Context) -> float:
+    """Calculate URL entropy"""
+    p, lns = Counter(ctx.url), len(ctx.url)
+    return -sum(count/lns * math.log(count/lns, 2) for count in p.values())
 
 
 
