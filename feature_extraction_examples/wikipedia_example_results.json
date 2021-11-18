@@ -1,0 +1,19 @@
+{
+    "url_length": 39,
+    "is_https": true,
+    "ip_in_url": false,
+    "num_external_images": 17,
+    "num_https_links": 325,
+    "num_images": 20,
+    "favicon_matches": true,
+    "has_trademark": true,
+    "days_since_creation": 7614,
+    "days_since_last_update": 7614,
+    "days_until_expiration": 420,
+    "days_until_cert_expiration": 24,
+    "num_links": 325,
+    "mean_link_length": 31.79320987654321,
+    "num_shortened_urls": 0,
+    "num_double_slash_redirects": 0,
+    "url_entropy": 1.6644977792004616
+}
