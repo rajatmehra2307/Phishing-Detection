@@ -34,7 +34,7 @@ URL_SHORTENERS = {
     's2r.co',
 }
 
-# @Kleanthis where did this list come from?
+# Trademarks list is from an API offered by the US Patent and Trademark Office
 TRADEMARKS = {
     '4chan', 'abcnews', 'accuweather', 'adobe', 'airbnb', 'alibaba', 'aliexpress', 'alliantenergy',
     'allrecipes', 'amazon', 'americanexpress', 'angieslist', 'arstechnica', 'atlassian', 'atmosenergy',
