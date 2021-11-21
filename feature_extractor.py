@@ -206,7 +206,7 @@ def extract_feature_days_since_last_update(ctx: Context) -> int:
     if isinstance(last_updated_date, list):
         # ???
         last_updated_date = last_updated_date[0]
-    return difference_in_days(ctx.whois.creation_date, ctx.accessed_time)
+    return difference_in_days(last_updated_date, ctx.accessed_time)
 
 
 @register_feature('days_until_expiration')
