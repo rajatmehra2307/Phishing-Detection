@@ -1,5 +1,7 @@
 import argparse
+import ast
 from collections import Counter
+import concurrent.futures
 import dataclasses
 import datetime
 import json
@@ -7,10 +9,11 @@ import math
 from pathlib import Path
 import re
 import ssl
-from typing import Optional
+import traceback
+from typing import Iterator, Optional, TextIO, Tuple
 
 from bs4 import BeautifulSoup  # pip install beautifulsoup4
-import cryptography.x509  # pip install cryptography
+import M2Crypto  # sudo apt install swig; pip install M2Crypto
 import requests  # pip install requests
 import urllib3.util  # pip install urllib3
 import whois  # pip install python-whois
@@ -81,14 +84,54 @@ class Context:
     """Context from which we can extract features"""
     url: urllib3.util.Url
     page: BeautifulSoup
-    whois: whois.WhoisEntry
-    certificate: cryptography.x509.Certificate
+    whois: Optional[whois.WhoisEntry]
+    certificate: Optional[M2Crypto.X509.X509]
     accessed_time: datetime.datetime
 
 
 def difference_in_days(datetime_1: datetime.datetime, datetime_2: datetime.datetime) -> int:
     """Return the number of days difference between the two datetimes"""
     return int((datetime_2 - datetime_1).total_seconds() / (60 * 60 * 24))
+
+
+def get_port_from_url(url: urllib3.util.Url, default:int=None) -> int:
+    """Get the port number from a URL, using an appropriate default if
+    it doesn't explicitly specify one
+    """
+    if url.port is not None:
+        return url.port
+
+    if default is not None:
+        return default
+
+    return 443 if url.scheme.lower() == 'https' else 80
+
+
+def download_x509(url: urllib3.util.Url) -> Optional[M2Crypto.X509.X509]:
+    """Download a remote server's X509 cert, ignoring validation errors
+    as much as possible
+    """
+    def fake_check(*args, **kwargs) -> bool:
+        return True
+
+    def try_with_protocol(protocol_name: str) -> M2Crypto.X509.X509:
+        ctx = M2Crypto.SSL.Context(
+            protocol=protocol_name,
+            weak_crypto=True,
+            post_connection_check=fake_check)
+
+        conn = M2Crypto.SSL.Connection(ctx)
+        conn.connect((url.host, get_port_from_url(url)))
+
+        return conn.get_peer_cert()
+
+    try:
+        return try_with_protocol('tls')
+    except M2Crypto.SSL.SSLError:
+        try:
+            return try_with_protocol('sslv23')
+        except Exception:
+            return None
 
 
 FeatureExtractors = {}
@@ -196,37 +239,81 @@ def extract_feature_has_trademark(ctx: Context) -> bool:
 
 
 @register_feature('days_since_creation')
-def extract_feature_days_since_creation(ctx: Context) -> int:
+def extract_feature_days_since_creation(ctx: Context) -> Optional[int]:
     """Check the number of days since the domain was created"""
-    return difference_in_days(ctx.whois.creation_date, ctx.accessed_time)
+    if ctx.whois is None:
+        return None
+
+    creation_date = ctx.whois.creation_date
+
+    if isinstance(creation_date, list):
+        # ???
+        creation_date = creation_date[0]
+
+    if creation_date is None:
+        return None
+
+    if creation_date.tzinfo is None:
+        # assume UTC if not specified
+        creation_date = creation_date.replace(tzinfo=datetime.timezone.utc)
+
+    return difference_in_days(creation_date, ctx.accessed_time)
 
 
 @register_feature('days_since_last_update')
-def extract_feature_days_since_last_update(ctx: Context) -> int:
+def extract_feature_days_since_last_update(ctx: Context) -> Optional[int]:
     """Check the number of days since the domain was last updated"""
-    last_updated_date = ctx.whois.updated_date
-    if isinstance(last_updated_date, list):
+    if ctx.whois is None:
+        return None
+
+    updated_date = ctx.whois.updated_date
+
+    if isinstance(updated_date, list):
         # ???
-        last_updated_date = last_updated_date[0]
-    return difference_in_days(last_updated_date, ctx.accessed_time)
+        updated_date = updated_date[0]
+
+    if updated_date is None:
+        return None
+
+    if updated_date.tzinfo is None:
+        # assume UTC if not specified
+        updated_date = updated_date.replace(tzinfo=datetime.timezone.utc)
+
+    return difference_in_days(updated_date, ctx.accessed_time)
 
 
 @register_feature('days_until_expiration')
 def extract_feature_days_until_expiration(ctx: Context) -> int:
     """Check the number of days until the domain is set to expire"""
+    if ctx.whois is None:
+        return None
+
     expiration_date = ctx.whois.expiration_date
+
     if isinstance(expiration_date, list):
         # ???
         expiration_date = expiration_date[0]
+
+    if expiration_date is None:
+        return None
+
+    if expiration_date.tzinfo is None:
+        # assume UTC if not specified
+        expiration_date = expiration_date.replace(tzinfo=datetime.timezone.utc)
+
     return difference_in_days(ctx.accessed_time, expiration_date)
 
 
 @register_feature('days_until_cert_expiration')
-def extract_feature_days_until_cert_expiration(ctx: Context) -> int:
+def extract_feature_days_until_cert_expiration(ctx: Context) -> Optional[int]:
     """Check the number of days until the domain certificate is set to
     expire. https://stackoverflow.com/a/7691293
     """
-    return difference_in_days(ctx.accessed_time, ctx.certificate.not_valid_after)
+    if ctx.certificate is None:
+        return None
+    else:
+        expiration_date = ctx.certificate.get_not_after().get_datetime()
+        return difference_in_days(ctx.accessed_time, expiration_date)
 
 
 @register_feature('num_links')
@@ -281,6 +368,26 @@ def extract_feature_url_entropy(ctx: Context) -> float:
     return -sum(count/lns * math.log(count/lns, 2) for count in p.values())
 
 
+def iter_phish_urls(file: TextIO, limit:int=None) -> Iterator[urllib3.util.Url]:
+    """Iterate over URLs from a phish-type file"""
+    for i, item in enumerate(ast.literal_eval(file.read())):
+        if limit is not None and i >= limit:
+            break
+
+        if 'url' in item:
+            yield urllib3.util.parse_url(item['url'])
+
+
+def iter_tranco_urls(file: TextIO, limit:int=None) -> Iterator[urllib3.util.Url]:
+    """Iterate over URLs from a Tranco-type file"""
+    for i, line in enumerate(file):
+        if limit is not None and i >= limit:
+            break
+
+        line = line.strip()
+        split = line.split(',')
+        yield urllib3.util.parse_url(split[1])
+
 
 def parse_args(argv=None) -> argparse.Namespace:
     """
@@ -289,29 +396,38 @@ def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description='HTML feature extractor for CS 6262 project')
 
-    input_group = parser.add_argument_group('input',
+    DEFAULT_CONN_TIMEOUT = 5
+    parser.add_argument('--connection-timeout', type=int, default=DEFAULT_CONN_TIMEOUT,
+        help=f'set the connection timeout in seconds (default: {DEFAULT_CONN_TIMEOUT})')
+
+    subparsers = parser.add_subparsers(dest='subparser_name', required=True)
+
+    single_parser = subparsers.add_parser('single',
+        help='analyze a single URL')
+
+    input_group = single_parser.add_argument_group('input',
         description='options related to input')
 
     input_group.add_argument('url', type=urllib3.util.parse_url,
-        help='URL of the page (needed to count things like "external images")')
+        help='URL of the page')
 
     html_source_group = input_group.add_mutually_exclusive_group(required=True)
     html_source_group.add_argument('--active-html-download', action='store_true',
         help='download the HTML source from the URL')
     html_source_group.add_argument('--html', type=Path,
-        help='use the provided HTML source file (no network access will be performd for this step)')
+        help='use the provided HTML source file (no network access will be performed for this step)')
 
     whois_source_group = input_group.add_mutually_exclusive_group(required=True)
     whois_source_group.add_argument('--active-whois-download', action='store_true',
         help='download the whois data from the URL')
     whois_source_group.add_argument('--whois', type=Path,
-        help='use the provided whois text file (no network access will be performd for this step)')
+        help='use the provided whois text file (no network access will be performed for this step)')
 
     cert_source_group = input_group.add_mutually_exclusive_group(required=True)
     cert_source_group.add_argument('--active-certificate-download', action='store_true',
         help='download the certificate data from the URL')
     cert_source_group.add_argument('--certificate', type=Path,
-        help='use the provided X.509 certificate PEM file (no network access will be performd for this step)')
+        help='use the provided X.509 certificate PEM file (no network access will be performed for this step)')
 
     time_source_group = input_group.add_mutually_exclusive_group(required=True)
     time_source_group.add_argument('--current-time', action='store_true',
@@ -322,13 +438,13 @@ def parse_args(argv=None) -> argparse.Namespace:
     input_group.add_argument('--encoding', default='utf-8',
         help='override the encoding of the HTML file (default: utf-8) (only used if --html is specified)')
 
-    output_group = parser.add_argument_group('output',
+    output_group = single_parser.add_argument_group('output',
         description='options related to output')
 
     output_group.add_argument('--output', type=Path,
         help='JSON file to save output to (if not specified, write to stdout)')
 
-    debug_group = parser.add_argument_group('debug',
+    debug_group = single_parser.add_argument_group('debug',
         description='options related to debug output')
     debug_group.add_argument('--save-html', type=Path,
         help='save analyzed HTML document to this file (utf-8)')
@@ -339,43 +455,60 @@ def parse_args(argv=None) -> argparse.Namespace:
     debug_group.add_argument('--save-time', type=Path,
         help='save analyzed ISO timestamp to this file')
 
+    multi_parser = subparsers.add_parser('multi',
+        help='analyze URLs from a file')
+
+    multi_parser.add_argument('input_type', choices=['phish', 'tranco'],
+        help='type of input file')
+    multi_parser.add_argument('input_file', type=Path,
+        help='input file')
+    multi_parser.add_argument('output_file', type=Path,
+        help='JSON Lines (https://jsonlines.org/) file to save output to')
+    multi_parser.add_argument('--limit', type=int, metavar='N',
+        help='only analyze the first N URLs')
+    DEFAULT_NUM_THREADS = 20
+    multi_parser.add_argument('--max-threads', type=int, metavar='N', default=DEFAULT_NUM_THREADS,
+        help=f'number of threads to use for concurrent connections (default: {DEFAULT_NUM_THREADS})')
+
     return parser.parse_args(argv)
 
 
-def main(argv=None) -> None:
-    """Main function"""
-
-    args = parse_args(argv)
-
+def main_single(args: argparse.Namespace) -> None:
+    """Handle the "single" command"""
     # URL
     url = args.url
 
     # HTML
     if args.active_html_download:
-        html = requests.get(url.url).text
+        html = requests.get(url.url, timeout=args.connection_timeout).text
     else:
         html = args.html.read_text(encoding=args.encoding)
 
     # Whois
     if args.active_whois_download:
-        whois_entry = whois.whois(url.url)
+        try:
+            whois_entry = whois.whois(url.url)
+        except whois.parser.PywhoisError:
+            whois_entry = None
     else:
         whois_entry = whois.parser.WhoisEntry.load(url.url, args.whois.read_text(encoding='utf-8'))
 
     # Certificate
     if args.active_certificate_download:
-        port = url.port
-        if port is None:
-            port = 443 if url.scheme.lower() == 'https' else 80
-        pem = ssl.get_server_certificate((url.host, port)).encode('ascii')
+        cert = download_x509(url)
     else:
-        pem = args.certificate.read_bytes()
+        cert = M2Crypto.X509.load_cert(str(args.certificate))
 
     # Time
     if args.current_time:
-        time = datetime.datetime.now()
+        time = datetime.datetime.now(datetime.timezone.utc)
     else:
         time = args.time
+        if time.tzinfo is None:
+            # assume current timezone
+            time = time.replace(tzinfo=datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo)
+
+    assert time.tzinfo is not None, 'naive datetimes are not allowed'
 
     # Optional debug output
     if args.save_html is not None:
@@ -391,16 +524,94 @@ def main(argv=None) -> None:
         url,
         BeautifulSoup(html, 'html.parser'),
         whois_entry,
-        cryptography.x509.load_pem_x509_certificate(pem),
+        cert,
         time)
 
-    result = {key: func(ctx) for key, func in FeatureExtractors.items()}
+    result = {'url': url.url}
+    result.update({key: func(ctx) for key, func in FeatureExtractors.items()})
 
     if args.output:
         with open(args.output, 'w', encoding='utf-8') as f:
             json.dump(result, f, indent=4)
     else:
         print(json.dumps(result, indent=4))
+
+
+def main_multi(args: argparse.Namespace) -> None:
+    """Handle the "multi" command"""
+
+    if args.input_type == 'phish':
+        iter_func = iter_phish_urls
+    elif args.input_type == 'tranco':
+        iter_func = iter_tranco_urls
+    else:
+        raise ValueError(f'Unknown input file type: "{args.input_type}"')
+
+    def handle_url(url: urllib3.util.Url) -> Tuple[urllib3.util.Url, Optional[dict]]:
+        """Process one URL (thread entrypoint)"""
+        # Add "https://" if no scheme was specified
+        if url.scheme is None:
+            url = url._replace(scheme='https')
+
+        failure_return_value = (url, None)
+
+        try:
+            try:
+                html = requests.get(url.url, timeout=args.connection_timeout).text
+            except (requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
+                # just return None instead of spamming the console with "couldn't connect" errors
+                return failure_return_value
+
+            try:
+                whois_entry = whois.whois(url.url)
+            except whois.parser.PywhoisError:
+                whois_entry = None
+
+            # Download certificate if available (may return None)
+            cert = download_x509(url)
+
+            # Create context
+            ctx = Context(
+                url,
+                BeautifulSoup(html, 'html.parser'),
+                whois_entry,
+                cert,
+                datetime.datetime.now(datetime.timezone.utc))
+
+            # Run analysis and build result dict
+            result = {'url': url.url}
+            result.update({key: func(ctx) for key, func in FeatureExtractors.items()})
+
+            return url, result
+
+        except Exception:
+            traceback.print_exc()
+            return failure_return_value
+
+    executor = concurrent.futures.ThreadPoolExecutor(max_workers=args.max_threads)
+
+    with args.input_file.open('r', encoding='utf-8') as f_in:
+        with args.output_file.open('w', encoding='utf-8') as f_out:
+            for i, (url, result_dict) in enumerate(executor.map(handle_url, iter_func(f_in, args.limit))):
+                if result_dict is None:
+                    print(f'Error while analyzing {url.url} (skipping...)')
+                else:
+                    f_out.write(json.dumps(result_dict, separators=(',', ':')))
+                    f_out.write('\n')
+                    print(f'Finished analyzing {url.url}')
+
+
+def main(argv=None) -> None:
+    """Main function"""
+
+    args = parse_args(argv)
+
+    if args.subparser_name == 'single':
+        main_single(args)
+    elif args.subparser_name == 'multi':
+        main_multi(args)
+    else:
+        print('No command specified...?')
 
 
 if __name__ == '__main__':

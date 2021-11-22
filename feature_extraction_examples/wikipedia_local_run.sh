@@ -1,4 +1,5 @@
 python3 ../feature_extractor.py \
+    single \
     https://en.wikipedia.org/wiki/Main_Page \
     --html data/wikipedia.html \
     --whois data/wikipedia_whois.txt \
