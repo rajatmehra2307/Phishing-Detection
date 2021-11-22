@@ -34,7 +34,9 @@ URL_SHORTENERS = {
     's2r.co',
 }
 
-# Trademarks list is from an API offered by the US Patent and Trademark Office
+# Trademarks list verified with the US Patent and Trademark Office (uspto.gov)
+# The following most popular and common firms, companies, institutions, and services providers
+# hold an active registration of their trademark with the US Patent and Trademark Office.
 TRADEMARKS = {
     '4chan', 'abcnews', 'accuweather', 'adobe', 'airbnb', 'alibaba', 'aliexpress', 'alliantenergy',
     'allrecipes', 'amazon', 'americanexpress', 'angieslist', 'arstechnica', 'atlassian', 'atmosenergy',
