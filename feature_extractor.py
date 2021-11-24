@@ -17,6 +17,7 @@ import M2Crypto  # sudo apt install swig; pip install M2Crypto
 import requests  # pip install requests
 import urllib3.util  # pip install urllib3
 import whois  # pip install python-whois
+from dateutil.parser import parse #pip install python-dateutil
 
 
 # https://ihateregex.io/expr/ip
@@ -253,6 +254,9 @@ def extract_feature_days_since_creation(ctx: Context) -> Optional[int]:
     if creation_date is None:
         return None
 
+    if isinstance(creation_date, str):
+        creation_date = parse(creation_date)
+
     if creation_date.tzinfo is None:
         # assume UTC if not specified
         creation_date = creation_date.replace(tzinfo=datetime.timezone.utc)
@@ -275,6 +279,9 @@ def extract_feature_days_since_last_update(ctx: Context) -> Optional[int]:
     if updated_date is None:
         return None
 
+    if isinstance(updated_date, str):
+        updated_date = parse(updated_date)    
+
     if updated_date.tzinfo is None:
         # assume UTC if not specified
         updated_date = updated_date.replace(tzinfo=datetime.timezone.utc)
@@ -296,6 +303,9 @@ def extract_feature_days_until_expiration(ctx: Context) -> int:
 
     if expiration_date is None:
         return None
+
+    if isinstance(expiration_date, str):
+        expiration_date = parse(expiration_date)    
 
     if expiration_date.tzinfo is None:
         # assume UTC if not specified
