@@ -108,7 +108,7 @@ def get_port_from_url(url: urllib3.util.Url, default:int=None) -> int:
     return 443 if url.scheme.lower() == 'https' else 80
 
 
-def download_x509(url: urllib3.util.Url) -> Optional[M2Crypto.X509.X509]:
+def download_x509(url: urllib3.util.Url, timeout: int) -> Optional[M2Crypto.X509.X509]:
     """Download a remote server's X509 cert, ignoring validation errors
     as much as possible
     """
@@ -122,8 +122,8 @@ def download_x509(url: urllib3.util.Url) -> Optional[M2Crypto.X509.X509]:
             post_connection_check=fake_check)
 
         conn = M2Crypto.SSL.Connection(ctx)
+        conn.set_socket_read_timeout(M2Crypto.SSL.timeout(sec=timeout))
         conn.connect((url.host, get_port_from_url(url)))
-
         return conn.get_peer_cert()
 
     try:
@@ -505,7 +505,7 @@ def main_single(args: argparse.Namespace) -> None:
 
     # Certificate
     if args.active_certificate_download:
-        cert = download_x509(url)
+        cert = download_x509(url, timeout=args.connection_timeout)
     else:
         cert = M2Crypto.X509.load_cert(str(args.certificate))
 
@@ -578,7 +578,7 @@ def main_multi(args: argparse.Namespace) -> None:
                 whois_entry = None
 
             # Download certificate if available (may return None)
-            cert = download_x509(url)
+            cert = download_x509(url, timeout=args.connection_timeout)
 
             # Create context
             ctx = Context(
@@ -591,7 +591,6 @@ def main_multi(args: argparse.Namespace) -> None:
             # Run analysis and build result dict
             result = {'url': url.url}
             result.update({key: func(ctx) for key, func in FeatureExtractors.items()})
-
             return url, result
 
         except Exception:
