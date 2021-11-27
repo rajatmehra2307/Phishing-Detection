@@ -1,16 +1,15 @@
+# Paths for json files with features 
+pathJSONphish="/Users/kleanthis/GitHub/Phishing-Detection/feature_extraction_examples/phish_output_final.json"
+pathJSONtranco="/Users/kleanthis/GitHub/Phishing-Detection/feature_extraction_examples/tranco_output_final.json"
 
+pathIntermediateData="/Users/kleanthis/GitHub/Phishing-Detection/results/"
 
 # Path where the python lists of malicious and benign domains are saved
-pathPhishing='/.../phishy.npy'
-pathBenign='/.../benign.npy'
+pathPhishing='/Users/kleanthis/GitHub/Phishing-Detection/results/phishlistoflistsoffeatures.npy'
+pathBenign='/Users/kleanthis/GitHub/Phishing-Detection/results/trancolistoflistsoffeatures.npy'
+
+pathTrancoURLs='/Users/kleanthis/GitHub/Phishing-Detection/results/trancolistofURLs.npy'
+pathPhishURLs='/Users/kleanthis/GitHub/Phishing-Detection/results/phishlistofURLs.npy'
 
 # Path to save the model 
-saveBPATH='.../.../'    # NEEDS to be defined !!!!!!!!!
-# Save the evaluation results in a .txt file 
-txtfilename="/.../filename.txt.gz"  #  NEEDS to be defined !!!!!!!!!!
-# ROC curve
-savepathROC='/.../ROC_plot_BinaryClassifier.png'   #  NEEDS to be defined !!!!!!!!!!
-# Confusion Matrix
-savepathCM='/.../confusion_matrix_plot_BinaryClf.png'   #  NEEDS to be defined !!!!!!!!!!
-# Final trained Model
-pathFinalModel='/.../BinaryClf.sav'    #  NEEDS to be defined !!!!!!!!!!
+saveBPATH='/Users/kleanthis/GitHub/Phishing-Detection/results/modelSelection/'
