@@ -191,7 +191,7 @@ def trainBinClf(CLFname):
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    roctitle='Receiver Operating Characteristic for the'+CLFname+' Binary Classifier'
+    roctitle='Receiver Operating Characteristic for the '+CLFname+' Binary Classifier'
     plt.title(roctitle)
     plt.legend(loc="lower right")
     savepathROC=PA.saveBPATH+'ROC_plot_'+CLFname+'.png'   #  NEEDS to be defined !!!!!!!!!!
