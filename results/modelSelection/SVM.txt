@@ -1,0 +1,26 @@
+Classification Report for Support Vector Machine
+
+              precision    recall  f1-score   support
+
+      benign       0.86      0.83      0.84      2795
+      phishy       0.81      0.84      0.82      2363
+
+    accuracy                           0.83      5158
+   macro avg       0.83      0.83      0.83      5158
+weighted avg       0.83      0.83      0.83      5158
+
+
+##################################################################
+
+
+Accuracy Score for the Support Vector Machine Binary Classifier is the following: 0.832299340829779
+
+
+Area Under the ROC for the Support Vector Machine Binary Classifier is the following: 0.9211440234322065
+
+
+Partial Area Under the ROC at 10.0% FPR cut-off for the Support Vector Machine Binary Classifier is the following: 0.7886010049717056
+
+
+Measuring accuracy at 90.0% detection rate. Detection thershold= 0.29676213613356117 . Detection Accuracy: 0.8220240403257076
+
