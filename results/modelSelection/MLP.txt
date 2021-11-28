@@ -1,0 +1,26 @@
+Classification Report for Multilayer Perceptron
+
+              precision    recall  f1-score   support
+
+      benign       0.93      0.95      0.94      2795
+      phishy       0.94      0.91      0.93      2363
+
+    accuracy                           0.93      5158
+   macro avg       0.93      0.93      0.93      5158
+weighted avg       0.93      0.93      0.93      5158
+
+
+##################################################################
+
+
+Accuracy Score for the Multilayer Perceptron Binary Classifier is the following: 0.9327258627374951
+
+
+Area Under the ROC for the Multilayer Perceptron Binary Classifier is the following: 0.9812890590400457
+
+
+Partial Area Under the ROC at 10.0% FPR cut-off for the Multilayer Perceptron Binary Classifier is the following: 0.9370760097560614
+
+
+Measuring accuracy at 90.0% detection rate. Detection thershold= 0.6127786700163392 . Detection Accuracy: 0.9325319891430787
+

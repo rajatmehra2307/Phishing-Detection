@@ -1,0 +1,26 @@
+Classification Report for Gaussian Process Classifier
+
+              precision    recall  f1-score   support
+
+      benign       0.87      0.98      0.92      2795
+      phishy       0.97      0.83      0.89      2363
+
+    accuracy                           0.91      5158
+   macro avg       0.92      0.90      0.91      5158
+weighted avg       0.92      0.91      0.91      5158
+
+
+##################################################################
+
+
+Accuracy Score for the Gaussian Process Classifier Binary Classifier is the following: 0.9108181465684374
+
+
+Area Under the ROC for the Gaussian Process Classifier Binary Classifier is the following: 0.861704785387727
+
+
+Partial Area Under the ROC at 10.0% FPR cut-off for the Gaussian Process Classifier Binary Classifier is the following: 0.854506921523636
+
+
+Measuring accuracy at 90.0% detection rate. Detection thershold= 0.49999999500016656 . Detection Accuracy: 0.4866227219852656
+

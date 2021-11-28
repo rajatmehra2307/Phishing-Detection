@@ -1,0 +1,26 @@
+Classification Report for Logistic Regression
+
+              precision    recall  f1-score   support
+
+      benign       0.94      0.85      0.90      2795
+      phishy       0.84      0.94      0.89      2363
+
+    accuracy                           0.89      5158
+   macro avg       0.89      0.90      0.89      5158
+weighted avg       0.90      0.89      0.89      5158
+
+
+##################################################################
+
+
+Accuracy Score for the Logistic Regression Binary Classifier is the following: 0.8935633966653742
+
+
+Area Under the ROC for the Logistic Regression Binary Classifier is the following: 0.9641797327159844
+
+
+Partial Area Under the ROC at 10.0% FPR cut-off for the Logistic Regression Binary Classifier is the following: 0.8852272601852389
+
+
+Measuring accuracy at 90.0% detection rate. Detection thershold= 0.6034165727088819 . Detection Accuracy: 0.89433889104304
+
