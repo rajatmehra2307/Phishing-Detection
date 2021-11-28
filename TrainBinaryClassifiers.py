@@ -11,9 +11,9 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.metrics import classification_report, accuracy_score, roc_auc_score, plot_confusion_matrix, roc_curve, auc
-from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import mutual_info_classif
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
@@ -38,17 +38,18 @@ xTRUE=tempArray.tolist()
 tempArray=np.load(PA.pathBenign)
 xBenign=tempArray.tolist()
 
-tolerance=1.2
+# tolerance=1.2
+# Tm=math.ceil(tolerance*len(xTRUE))
+# if len(xBenign)>Tm:  # 33,499 > (11,722 * 1.2 ->ceil= 14,067)
+# 	# random.shuffle(BenignList)
+# 	xBenign=xBenign[0:Tm]
+# elif len(xTRUE)> (tolerance*len(xBenign)):
+# 	random.shuffle(xTRUE)
+# 	xTRUE=xTRUE[0:math.ceil(tolerance*len(xBenign))]
+xBenignEval=xBenign[14067:] # Interested in calculating False Positive, i.e Benign domains characterized as positive (phishy) by our algorithm
+xBenign=xBenign[:14067]
 
-Tm=math.ceil(tolerance*len(xTRUE))
-if len(xBenign)>Tm:  # 33,499 > (11,722 * 1.2 ->ceil= 14,067)
-	# random.shuffle(BenignList)
-	xBenign=xBenign[0:Tm]
-elif len(xTRUE)> (tolerance*len(xBenign)):
-	random.shuffle(xTRUE)
-	xTRUE=xTRUE[0:math.ceil(tolerance*len(xBenign))]
-
-# At this point both training lists are balanced and ready for training
+# At this point both training lists are balanced (with tolerance of 20%) and ready for training
 
 # Train the Binary Classifier
 
