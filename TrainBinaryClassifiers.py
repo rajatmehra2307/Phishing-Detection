@@ -11,9 +11,13 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.metrics import classification_report, accuracy_score, roc_auc_score, plot_confusion_matrix, roc_curve, auc
-from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import mutual_info_classif
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.gaussian_process.kernels import RBF
+from sklearn.gaussian_process import GaussianProcessClassifier
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
@@ -22,6 +26,8 @@ import gzip
 import joblib
 import json
 import pathsToSave as PA
+import heapq
+import pickle
 
 dictBinaryLabels={1:'phishy',0:'benign'}   
 
@@ -38,17 +44,18 @@ xTRUE=tempArray.tolist()
 tempArray=np.load(PA.pathBenign)
 xBenign=tempArray.tolist()
 
-tolerance=1.2
+# tolerance=1.2
+# Tm=math.ceil(tolerance*len(xTRUE))
+# if len(xBenign)>Tm:  # 33,499 > (11,722 * 1.2 ->ceil= 14,067)
+# 	# random.shuffle(BenignList)
+# 	xBenign=xBenign[0:Tm]
+# elif len(xTRUE)> (tolerance*len(xBenign)):
+# 	random.shuffle(xTRUE)
+# 	xTRUE=xTRUE[0:math.ceil(tolerance*len(xBenign))]
+xBenignEval=xBenign[14067:] # Interested in calculating False Positive, i.e Benign domains characterized as positive (phishy) by our algorithm
+xBenign=xBenign[:14067]
 
-Tm=math.ceil(tolerance*len(xTRUE))
-if len(xBenign)>Tm:  # 33,499 > (11,722 * 1.2 ->ceil= 14,067)
-	# random.shuffle(BenignList)
-	xBenign=xBenign[0:Tm]
-elif len(xTRUE)> (tolerance*len(xBenign)):
-	random.shuffle(xTRUE)
-	xTRUE=xTRUE[0:math.ceil(tolerance*len(xBenign))]
-
-# At this point both training lists are balanced and ready for training
+# At this point both training lists are balanced (with tolerance of 20%) and ready for training
 
 # Train the Binary Classifier
 
@@ -56,7 +63,8 @@ yTRUE=[1]*len(xTRUE)
 
 yBenign=[0]*len(xBenign)
 
-
+print("Number of benign samples in the training set = "+str(len(yBenign))+"\n")
+print("Number of phishing samples in the training set = "+str(len(yTRUE))+"\n")
 xTRUE.extend(xBenign)
 yTRUE.extend(yBenign)
 
@@ -65,6 +73,13 @@ yTRUE=np.asarray(yTRUE)
 
 
 X_train, X_test, y_train, y_test=train_test_split(xTRUE, yTRUE, test_size=0.2, random_state=13)
+feature_names=['url_length','is_https','ip_in_url', 'num_external_images', 'num_https_links', 'num_images', 'favicon_matches', 'has_trademark', 
+               'days_since_creation', 'days_since_last_update', 'days_until_expiration', 'days_until_cert_expiration', 'num_links', 'mean_link_length', 'num_shortened_urls', 'num_double_slash_redirects', 'url_entropy']
+mi=mutual_info_classif(xTRUE, yTRUE)
+res=dict(zip(feature_names,mi))
+print(res)
+Hlist=heapq.nlargest(10,res,key=res.get) # list of keys: feature_names
+print(Hlist)
 
 # Directory to save the models
 if not os.path.exists(PA.saveBPATH):
@@ -82,7 +97,7 @@ def trainBinClf(CLFname):
             scores = cross_val_score(KNN, X_train, y_train, cv=10)
             AccuracyScores.append(scores.mean())
         Kopt=int((3* AccuracyScores.index(max(AccuracyScores)) )+5)
-
+        print("Optimal k for the KNN classifier is: "+str(Kopt)+"\n")
         # Fit the Binary classifier with the computed optimal value 
         binclf=KNeighborsClassifier(n_neighbors=Kopt, weights='uniform',n_jobs=5).fit(X_train,y_train)
     # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -111,6 +126,15 @@ def trainBinClf(CLFname):
         Fname='Multilayer Perceptron'
         # 7)         Multi-Layer Perceptron Classifier
         binclf=MLPClassifier(alpha=1, max_iter=1000).fit(X_train,y_train)
+    elif CLFname=="QDA":
+        Fname="Quadratic Discriminant Analysis"
+        binclf=QuadraticDiscriminantAnalysis().fit(X_train,y_train)
+    elif CLFname=="DT":
+        Fname="Decision Tree"
+        binclf=DecisionTreeClassifier(random_state=13).fit(X_train,y_train)
+    elif CLFname=="GPC":
+        Fname="Gaussian Process Classifier"
+        binclf=GaussianProcessClassifier(random_state=13).fit(X_train,y_train)
     # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
     # After evaluation on the test set we are going to retrain the final Classifier on the ENTIRE dataset
@@ -234,6 +258,12 @@ def trainBinClf(CLFname):
     elif CLFname=="MLP":
         # 7)         Multi-Layer Perceptron Classifier
         binclf=MLPClassifier(alpha=1, max_iter=1000).fit(xTRUE,yTRUE)
+    elif CLFname=="QDA":
+        binclf=QuadraticDiscriminantAnalysis().fit(xTRUE,yTRUE)
+    elif CLFname=="DT":
+        binclf=DecisionTreeClassifier(random_state=13).fit(xTRUE,yTRUE)
+    elif CLFname=="GPC":
+        binclf=GaussianProcessClassifier(random_state=13).fit(xTRUE,yTRUE)
     #Save the final model
     pathFinalModel=PA.saveBPATH+CLFname+'BinaryClf.sav'
     joblib.dump(binclf,pathFinalModel)
@@ -249,3 +279,6 @@ if __name__ == '__main__':
     trainBinClf(CLFname="SVM")
     trainBinClf(CLFname="gNB")
     trainBinClf(CLFname="MLP")
+    trainBinClf(CLFname="QDA")
+    trainBinClf(CLFname="DT")
+    trainBinClf(CLFname="GPC")
