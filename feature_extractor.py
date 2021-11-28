@@ -374,7 +374,7 @@ def extract_feature_num_double_slash_redirects(ctx: Context) -> int:
 @register_feature('url_entropy')
 def extract_feature_url_entropy(ctx: Context) -> float:
     """Calculate URL entropy"""
-    p, lns = Counter(ctx.url), len(ctx.url)
+    p, lns = Counter(str(ctx.url)), len(str(ctx.url))
     return -sum(count/lns * math.log(count/lns, 2) for count in p.values())
 
 
