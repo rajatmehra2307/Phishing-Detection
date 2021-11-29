@@ -22,5 +22,8 @@ pathTrancoRemaining='/Users/kleanthis/GitHub/Phishing-Detection/results/trancoRe
 # Path to save the models
 saveBPATH='/Users/kleanthis/GitHub/Phishing-Detection/results/modelSelection/'
 
-# PAth to save the models trained on reduced features
+# Path to save the models trained on reduced features
 saveBPATHr='/Users/kleanthis/GitHub/Phishing-Detection/results/modelSelectionReducedFeatures/'
+
+# Path to save the best model
+saveMODEL='/Users/kleanthis/GitHub/Phishing-Detection/results/modelSelection/RFBinaryClf.sav'
