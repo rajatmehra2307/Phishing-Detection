@@ -1,0 +1,26 @@
+Classification Report for Decision Tree
+
+              precision    recall  f1-score   support
+
+      benign       0.98      0.98      0.98      2709
+      phishy       0.97      0.98      0.97      2294
+
+    accuracy                           0.98      5003
+   macro avg       0.98      0.98      0.98      5003
+weighted avg       0.98      0.98      0.98      5003
+
+
+##################################################################
+
+
+Accuracy Score for the Decision Tree Binary Classifier is the following: 0.9762142714371377
+
+
+Area Under the ROC for the Decision Tree Binary Classifier is the following: 0.9761329489386503
+
+
+Partial Area Under the ROC at 10.0% FPR cut-off for the Decision Tree Binary Classifier is the following: 0.9285887644682489
+
+
+Measuring accuracy at 90.0% detection rate. Detection thershold= 1.0 . Detection Accuracy: 0.9762142714371377
+

@@ -1,0 +1,26 @@
+Classification Report for k-Nearest-Neighbors
+
+              precision    recall  f1-score   support
+
+      benign       0.93      0.92      0.93      2709
+      phishy       0.91      0.92      0.91      2294
+
+    accuracy                           0.92      5003
+   macro avg       0.92      0.92      0.92      5003
+weighted avg       0.92      0.92      0.92      5003
+
+
+##################################################################
+
+
+Accuracy Score for the k-Nearest-Neighbors Binary Classifier is the following: 0.919648211073356
+
+
+Area Under the ROC for the k-Nearest-Neighbors Binary Classifier is the following: 0.9677000170248483
+
+
+Partial Area Under the ROC at 10.0% FPR cut-off for the k-Nearest-Neighbors Binary Classifier is the following: 0.9025103732900748
+
+
+Measuring accuracy at 90.0% detection rate. Detection thershold= 0.6 . Detection Accuracy: 0.919648211073356
+

@@ -1,0 +1,26 @@
+Classification Report for Gaussian Naive Bayes
+
+              precision    recall  f1-score   support
+
+      benign       0.96      0.89      0.92      2709
+      phishy       0.88      0.96      0.92      2294
+
+    accuracy                           0.92      5003
+   macro avg       0.92      0.92      0.92      5003
+weighted avg       0.92      0.92      0.92      5003
+
+
+##################################################################
+
+
+Accuracy Score for the Gaussian Naive Bayes Binary Classifier is the following: 0.9210473715770537
+
+
+Area Under the ROC for the Gaussian Naive Bayes Binary Classifier is the following: 0.9820596236575233
+
+
+Partial Area Under the ROC at 10.0% FPR cut-off for the Gaussian Naive Bayes Binary Classifier is the following: 0.9615044653935956
+
+
+Measuring accuracy at 90.0% detection rate. Detection thershold= 0.9279270796786835 . Detection Accuracy: 0.947231661003398
+

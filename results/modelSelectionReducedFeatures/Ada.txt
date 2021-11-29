@@ -1,0 +1,26 @@
+Classification Report for Adaboost
+
+              precision    recall  f1-score   support
+
+      benign       0.97      0.98      0.97      2709
+      phishy       0.98      0.96      0.97      2294
+
+    accuracy                           0.97      5003
+   macro avg       0.97      0.97      0.97      5003
+weighted avg       0.97      0.97      0.97      5003
+
+
+##################################################################
+
+
+Accuracy Score for the Adaboost Binary Classifier is the following: 0.9720167899260443
+
+
+Area Under the ROC for the Adaboost Binary Classifier is the following: 0.9965637323101688
+
+
+Partial Area Under the ROC at 10.0% FPR cut-off for the Adaboost Binary Classifier is the following: 0.9861493348680936
+
+
+Measuring accuracy at 90.0% detection rate. Detection thershold= 0.5032858469130271 . Detection Accuracy: 0.95402758344993
+
