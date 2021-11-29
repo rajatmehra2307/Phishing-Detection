@@ -1,0 +1,31 @@
+{'url_length': 0.4697621395001148, 
+'is_https': 0.15639305680876237, 
+'ip_in_url': 0.0005628605478407156, 
+'num_external_images': 0.10633988364086844, 
+'num_https_links': 0.30238091797884636, 
+'num_images': 0.2073958259101425, 
+'favicon_matches': 0.02730195039633787, 
+'has_trademark': 0.028703494196700152, 
+'days_since_creation': 0.3031986858359672, 
+'days_since_last_update': 0.13420867654712287, 
+'days_until_expiration': 0.171663205409037, 
+'days_until_cert_expiration': 0.18434484104130688, 
+'num_links': 0.2907079580154375, 
+'mean_link_length': 0.29263703877894764, 
+'num_shortened_urls': 0.004402918886270646, 
+'num_double_slash_redirects': 0.008914077221093386, 
+'url_entropy': 0.4786858009765118}
+
+['url_entropy', 
+'url_length', 
+'days_since_creation', 
+'num_https_links', 
+'mean_link_length', 
+'num_links', 
+'num_images', 
+'days_until_cert_expiration', 
+'days_until_expiration', 
+'is_https']
+
+Indices:
+[16, 0, 8, 4, 13, 12, 5, 11, 10, 1]

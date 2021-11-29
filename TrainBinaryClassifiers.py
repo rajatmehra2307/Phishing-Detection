@@ -33,8 +33,8 @@ dictBinaryLabels={1:'phishy',0:'benign'}
 
 # Load the python lists with phishing and benign features of URLs
 
-tempArray=np.load(PA.pathPhishURLs)
-PhishingList=tempArray.tolist()
+# tempArray=np.load(PA.pathPhishURLs)
+# PhishingList=tempArray.tolist()
 tempArray=np.load(PA.pathTrancoURLs)
 BenignList=tempArray.tolist()
 
@@ -44,16 +44,15 @@ xTRUE=tempArray.tolist()
 tempArray=np.load(PA.pathBenign)
 xBenign=tempArray.tolist()
 
-# tolerance=1.2
-# Tm=math.ceil(tolerance*len(xTRUE))
-# if len(xBenign)>Tm:  # 33,499 > (11,722 * 1.2 ->ceil= 14,067)
-# 	# random.shuffle(BenignList)
-# 	xBenign=xBenign[0:Tm]
-# elif len(xTRUE)> (tolerance*len(xBenign)):
-# 	random.shuffle(xTRUE)
-# 	xTRUE=xTRUE[0:math.ceil(tolerance*len(xBenign))]
-xBenignEval=xBenign[14067:] # Interested in calculating False Positive, i.e Benign domains characterized as positive (phishy) by our algorithm
-xBenign=xBenign[:14067]
+tolerance=1.2
+Tm=math.ceil(tolerance*len(xTRUE))
+if len(xBenign)>Tm:  # 33,499 > (11,369 * 1.2 ->ceil= 13,643)
+	# random.shuffle(BenignList)
+	xBenign=xBenign[0:Tm]
+elif len(xTRUE)> (tolerance*len(xBenign)):
+	random.shuffle(xTRUE)
+	xTRUE=xTRUE[0:math.ceil(tolerance*len(xBenign))]
+# Interested in calculating False Positive, i.e Benign domains characterized as positive (phishy) by our algorithm
 
 # At this point both training lists are balanced (with tolerance of 20%) and ready for training
 
@@ -73,6 +72,11 @@ yTRUE=np.asarray(yTRUE)
 
 
 X_train, X_test, y_train, y_test=train_test_split(xTRUE, yTRUE, test_size=0.2, random_state=13)
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
+
 feature_names=['url_length','is_https','ip_in_url', 'num_external_images', 'num_https_links', 'num_images', 'favicon_matches', 'has_trademark', 
                'days_since_creation', 'days_since_last_update', 'days_until_expiration', 'days_until_cert_expiration', 'num_links', 'mean_link_length', 'num_shortened_urls', 'num_double_slash_redirects', 'url_entropy']
 mi=mutual_info_classif(xTRUE, yTRUE)
@@ -81,12 +85,23 @@ print(res)
 Hlist=heapq.nlargest(10,res,key=res.get) # list of keys: feature_names
 print(Hlist)
 
+indexL=[]
+for feature in Hlist:
+    indexL.append(feature_names.index(feature))
+print(indexL)
+xTRUER=xTRUE[:] # copy of features array
+xTRUER=xTRUER[:,indexL]
+yTRUER=yTRUE[:]
+X_trainR, X_testR, y_trainR, y_testR=train_test_split(xTRUER, yTRUER, test_size=0.2, random_state=13)
+# @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 # Directory to save the models
 if not os.path.exists(PA.saveBPATH):
     os.makedirs(PA.saveBPATH)
+if not os.path.exists(PA.saveBPATHr):
+    os.makedirs(PA.saveBPATHr)
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-def trainBinClf(CLFname):
+def trainBinClf(CLFname,X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test,xTRUE=xTRUE, yTRUE=yTRUE, saveBPATH=PA.saveBPATH):
     AccuracyScores=[]
     if CLFname=="KNN":
         Fname='k-Nearest-Neighbors'
@@ -185,7 +200,7 @@ def trainBinClf(CLFname):
 
     # Report its performance
     # To save the results in a text file!!
-    txtfilename= PA.saveBPATH+CLFname+".txt.gz" 
+    txtfilename= saveBPATH+CLFname+".txt.gz" 
     Textfile=gzip.open(txtfilename,"wt")
     temptext="Classification Report for "+Fname+"\n\n"
     Textfile.write(temptext)
@@ -218,7 +233,7 @@ def trainBinClf(CLFname):
     roctitle='Receiver Operating Characteristic for the '+CLFname+' Binary Classifier'
     plt.title(roctitle)
     plt.legend(loc="lower right")
-    savepathROC=PA.saveBPATH+'ROC_plot_'+CLFname+'.png'   #  NEEDS to be defined !!!!!!!!!!
+    savepathROC=saveBPATH+'ROC_plot_'+CLFname+'.png'   #  NEEDS to be defined !!!!!!!!!!
     plt.savefig(savepathROC)
 
 
@@ -230,7 +245,7 @@ def trainBinClf(CLFname):
     disp.ax_.set_title(htitle)
     print(htitle)
     print(disp.confusion_matrix)
-    savepathCM=PA.saveBPATH+'confusion_matrix_'+CLFname+'.png'
+    savepathCM=saveBPATH+'confusion_matrix_'+CLFname+'.png'
     plt.savefig(savepathCM)
 
 
@@ -265,7 +280,7 @@ def trainBinClf(CLFname):
     elif CLFname=="GPC":
         binclf=GaussianProcessClassifier(random_state=13).fit(xTRUE,yTRUE)
     #Save the final model
-    pathFinalModel=PA.saveBPATH+CLFname+'BinaryClf.sav'
+    pathFinalModel=saveBPATH+CLFname+'BinaryClf.sav'
     joblib.dump(binclf,pathFinalModel)
 
 
@@ -279,6 +294,17 @@ if __name__ == '__main__':
     trainBinClf(CLFname="SVM")
     trainBinClf(CLFname="gNB")
     trainBinClf(CLFname="MLP")
-    trainBinClf(CLFname="QDA")
+    # trainBinClf(CLFname="QDA")
     trainBinClf(CLFname="DT")
     trainBinClf(CLFname="GPC")
+    # @@@@@@@@@@@@@@@@@@@@@@@
+    trainBinClf(CLFname="KNN",X_train=X_trainR, X_test=X_testR, y_train=y_trainR, y_test=y_testR,xTRUE=xTRUER, yTRUE=yTRUER, saveBPATH=PA.saveBPATHr)
+    trainBinClf(CLFname="RF",X_train=X_trainR, X_test=X_testR, y_train=y_trainR, y_test=y_testR,xTRUE=xTRUER, yTRUE=yTRUER, saveBPATH=PA.saveBPATHr)
+    trainBinClf(CLFname="Ada",X_train=X_trainR, X_test=X_testR, y_train=y_trainR, y_test=y_testR,xTRUE=xTRUER, yTRUE=yTRUER, saveBPATH=PA.saveBPATHr)
+    trainBinClf(CLFname="LR",X_train=X_trainR, X_test=X_testR, y_train=y_trainR, y_test=y_testR,xTRUE=xTRUER, yTRUE=yTRUER, saveBPATH=PA.saveBPATHr)
+    trainBinClf(CLFname="SVM",X_train=X_trainR, X_test=X_testR, y_train=y_trainR, y_test=y_testR,xTRUE=xTRUER, yTRUE=yTRUER, saveBPATH=PA.saveBPATHr)
+    trainBinClf(CLFname="gNB",X_train=X_trainR, X_test=X_testR, y_train=y_trainR, y_test=y_testR,xTRUE=xTRUER, yTRUE=yTRUER, saveBPATH=PA.saveBPATHr)
+    trainBinClf(CLFname="MLP",X_train=X_trainR, X_test=X_testR, y_train=y_trainR, y_test=y_testR,xTRUE=xTRUER, yTRUE=yTRUER, saveBPATH=PA.saveBPATHr)
+    # trainBinClf(CLFname="QDA",X_train=X_trainR, X_test=X_testR, y_train=y_trainR, y_test=y_testR,xTRUE=xTRUER, yTRUE=yTRUER, saveBPATH=PA.saveBPATHr)
+    trainBinClf(CLFname="DT",X_train=X_trainR, X_test=X_testR, y_train=y_trainR, y_test=y_testR,xTRUE=xTRUER, yTRUE=yTRUER, saveBPATH=PA.saveBPATHr)
+    trainBinClf(CLFname="GPC",X_train=X_trainR, X_test=X_testR, y_train=y_trainR, y_test=y_testR,xTRUE=xTRUER, yTRUE=yTRUER, saveBPATH=PA.saveBPATHr)

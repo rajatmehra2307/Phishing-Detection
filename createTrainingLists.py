@@ -147,4 +147,3 @@ def parse_features(filetoparse):
 if __name__ == '__main__':
     parse_features(PA.pathJSONtranco)
     parse_features(PA.pathJSONphish)
-
