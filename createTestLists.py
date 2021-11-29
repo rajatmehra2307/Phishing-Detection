@@ -9,13 +9,14 @@ import json
 import pathsToSave as PA
 
 # Read JSON from a file
-def parse_features(filetoparse,nn="trancoRemaining", Hlist=[]):
+def parse_features(filetoparse,nn="trancoRemaining"):
     
     if os.path.exists(filetoparse):   # "tranco_remaining_final.json"     
         with open(filetoparse) as f:
             data=json.loads("["+f.read().replace("}\n{", "},\n{")+"]")
     else:
         print("No data file exists!!!")
+        raise ValueError("Please provide a valid path to the data.")
     # type(data)=<'list'>
     print('Number of elements in '+nn+" list is: "+str(len(data))+"\n")
     outputlist=[]
@@ -136,4 +137,5 @@ def parse_features(filetoparse,nn="trancoRemaining", Hlist=[]):
 #     example:
 #         ./createTrainingLists.py  
 if __name__ == '__main__':
+    # H=['url_entropy', 'url_length', 'days_since_creation', 'num_https_links', 'mean_link_length', 'num_links', 'num_images', 'days_until_cert_expiration', 'days_until_expiration', 'is_https']
     parse_features(PA.pathJSONtrancoRemaining)

@@ -9,10 +9,11 @@ pathIntermediateData="/Users/kleanthis/GitHub/Phishing-Detection/results/"
 # Path where the python lists of malicious and benign domains are saved
 pathPhishing='/Users/kleanthis/GitHub/Phishing-Detection/results/phishlistoflistsoffeatures.npy'
 pathBenign='/Users/kleanthis/GitHub/Phishing-Detection/results/trancolistoflistsoffeatures.npy'
+pathTrancoRemaining='/Users/kleanthis/GitHub/Phishing-Detection/results/trancoRemaininglistoflistsoffeatures.npy'
 
 pathTrancoURLs='/Users/kleanthis/GitHub/Phishing-Detection/results/trancolistofURLs.npy'
 pathPhishURLs='/Users/kleanthis/GitHub/Phishing-Detection/results/phishlistofURLs.npy'
-
+pathTrancoRemainingURLs='/Users/kleanthis/GitHub/Phishing-Detection/results/trancoRemaininglistofURLs.npy'
 
 # Tranco Remaining List 
 pathTrancoRemainingURLs='/Users/kleanthis/GitHub/Phishing-Detection/results/trancoRemaininglistofURLs.npy'
