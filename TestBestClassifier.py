@@ -53,7 +53,44 @@ binclf=joblib.load(pathsToSave.bestbinClf)  # load the trained model
     # binclf.classes_ : np.ndarray of shape (n_classes,) with the order of classes viz. array([0, 1])
     # label int 1:'phishy' and label int 0:'benign'
 
+ print('Pass the features through the binary classifiers.\n')
+TS=time.time()
+BenignProbabilities=np.zeros((X_benign.shape[0],2)) # (647,210 , 2)
+BenignProbabilities=binclf.predict_proba(X_benign)
+print('Time needed for the binary classifier is '+str(time.time()-TS)+' seconds.\n')
+BenignFP=0 # Number of benign domains classified as malicious (misclassifieed)
+indicesBenignFP=[] # refer to both lists: Lbenign and Benignfeatures(=X_benign)
+BenignFPdict=dict()
+BenignCorrectDict=dict()
+# X_benignALL=X_benign.tolist()=Benignfeatures
+X_benignFP=[]
+X_benignCorrect=[]
+for index in range(BenignProbabilities.shape[0]):
+    if BenignProbabilities[index,0]-BenignProbabilities[index,1]<0.: # P[benign] < P[malicious]
+        X_benignFP.append(Benignfeatures[index])
+        BenignFP+=1
+        indicesBenignFP.append(index)
+        BenignFPdict[Lbenign[index]]=dict() # {"dga.com":{"ProbMISS":0.6,"F":[]},...}
+        BenignFPdict[Lbenign[index]]["ProbMISS"]=BenignProbabilities[index,1]
+        BenignFPdict[Lbenign[index]]["F"]=list(X_benign[index,:])
+    else:
+        X_benignCorrect.append(Benignfeatures[index])
+        BenignCorrectDict[Lbenign[index]]=dict() # {"dga.com":{"ProbCorrect":0.6,"F":[]},...}
+        BenignCorrectDict[Lbenign[index]]["ProbCorrect"]=BenignProbabilities[index,0]
+        BenignCorrectDict[Lbenign[index]]["F"]=list(X_benign[index,:])
+print("Number of BENIGN domains missclassified as malicious: "+str(BenignFP)+", out of total "+str(len(Lbenign))+", viz. "+str(100.0*float(BenignFP/len(Lbenign)))+" %. \n")
 
+fullpath=paths.listsfolder+'X_benignFP.pk'
+with open(fullpath, 'wb') as f:
+    pickle.dump(X_benignFP, f, pickle.HIGHEST_PROTOCOL)
+X_benignFP=[]
+
+fullpath=paths.listsfolder+'X_benignCorrect.pk'
+with open(fullpath, 'wb') as f:
+    pickle.dump(X_benignCorrect, f, pickle.HIGHEST_PROTOCOL)
+X_benignCorrect=[]
+
+Benignfeatures=[]
 
 
 feature_names=['url_length','is_https','ip_in_url', 'num_external_images', 'num_https_links', 'num_images', 'favicon_matches', 'has_trademark', 

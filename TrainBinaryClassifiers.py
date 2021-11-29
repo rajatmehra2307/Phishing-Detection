@@ -56,6 +56,56 @@ elif len(xTRUE)> (tolerance*len(xBenign)):
 
 # At this point both training lists are balanced (with tolerance of 20%) and ready for training
 
+# Plot Distribution of features!
+# Separately for benign and malicious features
+# xTRUE list of lists containing the phishing features
+# xBenign list of lists containing the tranco/benign features 
+phishingFeatures=np.asarray(xTRUE)
+trancofeatures=np.asarray(xBenign)
+NumFeatures=trancofeatures.shape[-1]
+
+phishingValuesPerFeature=[]
+for i in range(NumFeatures):
+    phishingValuesPerFeature.append([])
+trancoValuesPerFeature=[]
+for i in range(NumFeatures):
+    trancoValuesPerFeature.append([])
+
+for sample in xTRUE: # sample is a list
+    for findex in range(len(sample)): # 0,1,2,3,...,16
+        phishingValuesPerFeature[findex].append(sample[findex])
+
+for sample in xBenign: # sample is a list
+    for findex in range(len(sample)): # 0,1,2,3,...,16
+        trancoValuesPerFeature[findex].append(sample[findex])
+
+
+# plt.figure(constrained_layout=True, figsize=(20, 8))
+fig, axs = plt.subplots(12,2, dpi=400) # figsize=(7,5)
+for i in range(NumFeatures): # 0,...,16 len()=17
+    axs[i,0].hist(BenignCorrectFeaturesValues[i],bins=100, density=True)
+    axs[i,1].hist(BenignFPFeaturesValues[i],bins=100, density=True)
+axs[0,0].set_title('Benign Domains TP')
+axs[0,1].set_title('Benign Domains Missclassified')
+for ax in axs.flat:
+    ax.set(xlabel='Feature Values')
+    ax.set_xticklabels([])
+
+# Hide x labels and tick labels for top plots and y ticks for right plots.
+for ax in axs.flat:
+    ax.label_outer()
+fig.suptitle('Distribution of Feature Values of Benign domains')
+
+# plt.title('Distribution of Feature Values of Benign domains')
+# plt.tight_layout()
+plt.savefig(paths.plotsfolder+'BenignDistr.png')  
+
+
+
+
+
+
+
 # Train the Binary Classifier
 
 yTRUE=[1]*len(xTRUE)
@@ -67,7 +117,7 @@ print("Number of phishing samples in the training set = "+str(len(yTRUE))+"\n")
 xTRUE.extend(xBenign)
 yTRUE.extend(yBenign)
 
-xTRUE=np.asarray(xTRUE)
+xTRUE=np.asarray(xTRUE)   # xTRUE.shape(11,369+13,643  ,  17) 
 yTRUE=np.asarray(yTRUE)
 
 
