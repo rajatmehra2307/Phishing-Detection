@@ -31,6 +31,10 @@ import pickle
 
 dictBinaryLabels={1:'phishy',0:'benign'}   
 
+feature_names=['url_length','is_https','ip_in_url', 'num_external_images', 'num_https_links', 'num_images', 'favicon_matches', 'has_trademark', 
+               'days_since_creation', 'days_since_last_update', 'days_until_expiration', 'days_until_cert_expiration', 'num_links', 'mean_link_length', 'num_shortened_urls', 'num_double_slash_redirects', 'url_entropy']
+
+
 # Load the python lists with phishing and benign features of URLs
 
 # tempArray=np.load(PA.pathPhishURLs)
@@ -60,10 +64,10 @@ elif len(xTRUE)> (tolerance*len(xBenign)):
 # Separately for benign and malicious features
 # xTRUE list of lists containing the phishing features
 # xBenign list of lists containing the tranco/benign features 
-phishingFeatures=np.asarray(xTRUE)
-trancofeatures=np.asarray(xBenign)
+phishingFeatures=np.asarray(xTRUE) # shape: (11,369 x 17)
+trancofeatures=np.asarray(xBenign) # shape: (13,643 x 17)
 NumFeatures=trancofeatures.shape[-1]
-
+# Initialization with empty lists
 phishingValuesPerFeature=[]
 for i in range(NumFeatures):
     phishingValuesPerFeature.append([])
@@ -78,32 +82,26 @@ for sample in xTRUE: # sample is a list
 for sample in xBenign: # sample is a list
     for findex in range(len(sample)): # 0,1,2,3,...,16
         trancoValuesPerFeature[findex].append(sample[findex])
+# At this point: 
+# phishingValuesPerFeature: 17 lists of 11,369 elements each
+# trancoValuesPerFeature: 17 lists of 13,643 elements each
 
-
-# plt.figure(constrained_layout=True, figsize=(20, 8))
-fig, axs = plt.subplots(12,2, dpi=400) # figsize=(7,5)
+# Plot of Distribution of Features
+fig, axs = plt.subplots( 17, 2, figsize=(18,15), dpi=400) # figsize=(7,5)
 for i in range(NumFeatures): # 0,...,16 len()=17
-    axs[i,0].hist(BenignCorrectFeaturesValues[i],bins=100, density=True)
-    axs[i,1].hist(BenignFPFeaturesValues[i],bins=100, density=True)
-axs[0,0].set_title('Benign Domains TP')
-axs[0,1].set_title('Benign Domains Missclassified')
+    axs[i,0].hist(trancoValuesPerFeature[i],bins=100, density=True)
+    axs[i,1].hist(phishingValuesPerFeature[i],bins=100, density=True)
+    axs[i,0].set_ylabel(feature_names[i], loc='bottom' ,rotation='horizontal')
+    axs[i,0].yaxis.set_label_coords(-0.33,0.2)
+    # axs[i,1].set_ylabel(feature_names[i])
+    # plt.setp(axs[i,:],xlabel=feature_names[i])
+axs[0,0].set_title('Benign (Tranco) URL Features')
+axs[0,1].set_title('Phishing URL Features')
 for ax in axs.flat:
-    ax.set(xlabel='Feature Values')
-    ax.set_xticklabels([])
-
-# Hide x labels and tick labels for top plots and y ticks for right plots.
-for ax in axs.flat:
-    ax.label_outer()
-fig.suptitle('Distribution of Feature Values of Benign domains')
-
-# plt.title('Distribution of Feature Values of Benign domains')
-# plt.tight_layout()
-plt.savefig(paths.plotsfolder+'BenignDistr.png')  
-
-
-
-
-
+        ax.set(xlabel='Feature Values')
+        ax.set_xticklabels([])
+fig.suptitle('Distribution of Feature Values of Benign vs Phishing domains')
+plt.savefig(PA.pathIntermediateData+'FeaturesDistribution.png')  
 
 
 # Train the Binary Classifier
@@ -125,10 +123,8 @@ X_train, X_test, y_train, y_test=train_test_split(xTRUE, yTRUE, test_size=0.2, r
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
-
-
-feature_names=['url_length','is_https','ip_in_url', 'num_external_images', 'num_https_links', 'num_images', 'favicon_matches', 'has_trademark', 
-               'days_since_creation', 'days_since_last_update', 'days_until_expiration', 'days_until_cert_expiration', 'num_links', 'mean_link_length', 'num_shortened_urls', 'num_double_slash_redirects', 'url_entropy']
+# feature_names=['url_length','is_https','ip_in_url', 'num_external_images', 'num_https_links', 'num_images', 'favicon_matches', 'has_trademark', 
+#                'days_since_creation', 'days_since_last_update', 'days_until_expiration', 'days_until_cert_expiration', 'num_links', 'mean_link_length', 'num_shortened_urls', 'num_double_slash_redirects', 'url_entropy']
 mi=mutual_info_classif(xTRUE, yTRUE)
 res=dict(zip(feature_names,mi))
 print(res)
