@@ -87,7 +87,7 @@ for sample in xBenign: # sample is a list
 # trancoValuesPerFeature: 17 lists of 13,643 elements each
 
 # Plot of Distribution of Features
-fig, axs = plt.subplots( 17, 2, figsize=(18,15), dpi=400) # figsize=(7,5)
+fig, axs = plt.subplots( NumFeatures, 2, figsize=(18,15), dpi=400) # figsize=(7,5)
 for i in range(NumFeatures): # 0,...,16 len()=17
     axs[i,0].hist(trancoValuesPerFeature[i],bins=100, density=True)
     axs[i,1].hist(phishingValuesPerFeature[i],bins=100, density=True)
@@ -186,7 +186,7 @@ def trainBinClf(CLFname,X_train=X_train, X_test=X_test, y_train=y_train, y_test=
     elif CLFname=="MLP":
         Fname='Multilayer Perceptron'
         # 7)         Multi-Layer Perceptron Classifier
-        binclf=MLPClassifier(alpha=1, max_iter=1000).fit(X_train,y_train)
+        binclf=MLPClassifier(hidden_layer_sizes=(50,),alpha=0.001, max_iter=1000).fit(X_train,y_train)
     elif CLFname=="QDA":
         Fname="Quadratic Discriminant Analysis"
         binclf=QuadraticDiscriminantAnalysis().fit(X_train,y_train)
@@ -318,7 +318,7 @@ def trainBinClf(CLFname,X_train=X_train, X_test=X_test, y_train=y_train, y_test=
         binclf= GaussianNB().fit(xTRUE,yTRUE)
     elif CLFname=="MLP":
         # 7)         Multi-Layer Perceptron Classifier
-        binclf=MLPClassifier(alpha=1, max_iter=1000).fit(xTRUE,yTRUE)
+        binclf=MLPClassifier(hidden_layer_sizes=(50,),alpha=0.001, max_iter=1000).fit(xTRUE,yTRUE)
     elif CLFname=="QDA":
         binclf=QuadraticDiscriminantAnalysis().fit(xTRUE,yTRUE)
     elif CLFname=="DT":
