@@ -486,8 +486,10 @@ def parse_args(argv=None) -> argparse.Namespace:
 def main_single(args: argparse.Namespace) -> None:
     """Handle the "single" command"""
     # URL
-    url = args.url
 
+    url = args.url
+    if url.scheme is None:
+            url = url._replace(scheme='https')
     # HTML
     if args.active_html_download:
         html = requests.get(url.url, timeout=args.connection_timeout).text
